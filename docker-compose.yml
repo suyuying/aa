@@ -1,0 +1,12 @@
+version: '3'
+
+services: 
+  golang:
+    image: golang-hello:0.1.0
+    container_name: golang
+    ports:
+      - 8080:8080
+    # volumes: 
+    #   - /home/${USER}/go/src/GO_Admin:/go/src/GO_Admin
+    # working_dir: /go/src/GO_Admin
+    # command: go run main.go
