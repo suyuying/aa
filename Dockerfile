@@ -6,7 +6,7 @@ COPY . /go/src/HelloWorlld
 WORKDIR /go/src/HelloWorlld
 
 # 進行編譯(名稱為：Hello-World)
-RUN go build -o Hello-World
+RUN go mod init Hello-World
 
 # 最終運行golang 的基底
 FROM alpine
