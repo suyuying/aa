@@ -7,6 +7,7 @@ RUN pwd
 COPY . /go/src/Project
 WORKDIR /go/src/Project
 RUN pwd
+RUN ls
 # 進行編譯(名稱為：project)
 RUN go build -o project
 
