@@ -34,5 +34,5 @@ steps:
       port: 22
       script:
         - echo hello
-        - ls
+        - ls -al
         - mkdir holyshit
