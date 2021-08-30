@@ -8,6 +8,7 @@ steps:
     image: fordlinox/test:v1                                 # 使用 neil605164/plugin-govendor  容器
     commands:                                                         # 需執行的指令
       - mkdir -p /usr/local/go/src/${DRONE_REPO_NAME}                 # 於 goroot 建立專案名稱的空資料夾
+      - pwd
       - ls
       - ls -al vendor                                                 # 查看當前 vendor 資料夾(尚未編譯完成的 code)
       - rsync -r  /drone/src/* /usr/local/go/src/${DRONE_REPO_NAME}   # 將 clone 的專案複製到 goroot 底下
@@ -36,4 +37,4 @@ steps:
       script:
         - echo hello
         - ls -al
-        - mkdir holyshit
+        - mkdir -p holyshit
