@@ -10,7 +10,7 @@ RUN pwd
 RUN ls
 # 進行編譯(名稱為：project)
 RUN go build -o project
-
+RUN ls
 # 最終運行golang 的基底
 FROM alpine
 RUN ls
@@ -18,4 +18,5 @@ RUN pwd
 COPY --from=build /go/src/Project/project /app/project
 WORKDIR /app
 RUN pwd
+RUN ls
 ENTRYPOINT [ "./project" ]
