@@ -23,4 +23,16 @@ steps:
         from_secret: docker_password
       repo: fordlinox/ff
       tags: latest
-
+  - name: ssh commands
+    image: appleboy/drone-ssh
+    settings:
+      host: 192.168.34.8
+      username: 
+        from_secret: servername
+      password: 
+        from_secret: serverpassword
+      port: 22
+      script:
+        - echo hello
+        - ls
+        - mkdir holyshit
