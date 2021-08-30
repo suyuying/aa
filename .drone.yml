@@ -17,8 +17,10 @@ steps:
   - name: build-image-push-harbor                   # 事件二：可自行定義的名稱
     image: plugins/docker                           # 使用 plugins/docker  容器
     settings:
-      username: fordlinox
-      password: Qwer45671234
+      username: 
+        from_secret: docker_username
+      password: 
+        from_secret: docker_password
       repo: fordlinox/ff
       tags: latest
 
