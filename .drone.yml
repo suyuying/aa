@@ -36,5 +36,5 @@ steps:
       port: 22
       script:
         - echo hello
-        - ls -al
-        - mkdir -p holyshit
+        - docker rm -f build
+        - docker run -d -p 8080:8080 --name=build fordlinox/ff
