@@ -1,41 +1,43 @@
 ## Drone 1.0 版本寫法
 kind: pipeline
 type: docker      # 在 Docker 內部執行管道命令
-name: clone       # 可自行定義的名稱
+name: build_relase_de       # 可自行定義的名稱
 
-steps:
-  - name: build-golang                                                # 事件一：可自行定義的名稱
-    image: fordlinox/plugin                                 # 使用 neil605164/plugin-govendor  容器
-    commands:                                                         # 需執行的指令
-      - mkdir -p /usr/local/go/src/${DRONE_REPO_NAME}                 # 於 goroot 建立專案名稱的空資料夾
-      - pwd
-      - ls
-      - ls -al vendor                                                 # 查看當前 vendor 資料夾(尚未編譯完成的 code)
-      - cp -r /drone/src/* /usr/local/go/src/${DRONE_REPO_NAME}   # 將 clone 的專案複製到 goroot 底下
-      - cd /usr/local/go/src/${DRONE_REPO_NAME}
-      - pwd        # 移動至 goroot 專案底下
-      - govendor sync                                                 # 編譯 golang 程式碼
-      - rsync -r /usr/local/go/src/${DRONE_REPO_NAME}/* /drone/src    # 將編譯後的程式在複製回 drone 預設 path
-      - ls -al vendor                                                 # 查看當前 vendor 資料夾(已經編譯完成的 code)
-  - name: build-image-push-harbor                   # 事件二：可自行定義的名稱
-    image: plugins/docker                           # 使用 plugins/docker  容器
+steps:                                                                # 以下用name區隔drone執行的每個步驟
+  - name: build-golang                             # 事件一：可自行定義的名稱
+    image: fordlinox/plugin                                           # 使用 fordlinox/plugin容器(具有go vendor指令的客製化image）
+    commands:                                                         # 需執行的指令（每個在drone裡開的container，預設work space都在/drone/src）
+      - mkdir -p /usr/local/go/src/${DRONE_REPO_NAME}                 # 於 goroot 建立專案名稱的空資料夾,使用-p 是創造一整串資料夾
+      - ls -al vendor                                                 # 查看當前 vendor 資料夾(標示相依性套件的vendor.json,內部寫有版本及commit時間等)
+      - cp -r /drone/src/* /usr/local/go/src/${DRONE_REPO_NAME}       # 將 clone 的專案複製到 goroot 底下
+      - cd /usr/local/go/src/${DRONE_REPO_NAME}                       # 移動至 goroot 專案底下
+      - govendor sync                                                 # 用govendor依據vendor.json把golang程式碼import的library版本,安裝在goroot專案底下
+      - mkdir -p /go/src/Project
+      - cd /go/src/Project
+      - cp -r /usr/local/go/src/${DRONE_REPO_NAME}/* /go/src/Project
+      - go build -o project
+      - ls 
+      - rsync -r /go/src/Project/* /drone/src    # 將裝完相依性套件的資料放回 drone的work space (必須，work space是每個步驟溝通的資料夾
+      - ls -al                                                 # 查看當前 vendor 資料夾(確認相依性套件成裝進來了)
+  - name: build-image-push-harbor                  # 事件二：可自行定義的名稱
+    image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
     settings:
       username: 
-        from_secret: docker_username
+        from_secret: docker_username                                  # 將registry登錄資料用加密儲存
       password: 
-        from_secret: docker_password
-      repo: fordlinox/gobuild_web
-      tags: latest
-  - name: ssh commands
-    image: appleboy/drone-ssh
+        from_secret: docker_password                                  
+      repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
+      tags: latest                                                    # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
+  - name: ssh commands                             # 事件三：可自行定義的名
+    image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
     settings:
-      host: 192.168.34.8
-      username: 
+      host: 192.168.34.8                                               # 目標機器ip
+      username:                                                        # 將機器登錄資料用加密儲存
         from_secret: servername
       password: 
         from_secret: serverpassword
       port: 22
-      script:
+      script:                                                          # 控制遠端機台執行指令
         - echo hello
         - docker rm -f build
         - docker rmi -f fordlinox/gobuild_web
