@@ -38,4 +38,5 @@ steps:
       script:
         - echo hello
         - docker rm -f build
+        - docker rmi -f fordlinox/ff
         - docker run -d -p 8080:8080 --name=build fordlinox/ff
