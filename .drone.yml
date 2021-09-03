@@ -24,7 +24,7 @@ steps:
         from_secret: docker_username
       password: 
         from_secret: docker_password
-      repo: fordlinox/ff
+      repo: fordlinox/gobuild_web
       tags: latest
   - name: ssh commands
     image: appleboy/drone-ssh
@@ -38,5 +38,5 @@ steps:
       script:
         - echo hello
         - docker rm -f build
-        - docker rmi -f fordlinox/ff
-        - docker run -d -p 8080:8080 --name=build fordlinox/ff
+        - docker rmi -f fordlinox/gobuild_web
+        - docker run -d -p 8080:8080 --name=build fordlinox/gobuild_web
