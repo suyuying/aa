@@ -18,6 +18,7 @@ steps:                                                                # 以下�
       - go build -o project
       - ls 
       - rsync -r /go/src/Project/* /drone/src    # 將裝完相依性套件的資料放回 drone的work space (必須，work space是每個步驟溝通的資料夾
+      - cd /drone/src
       - ls -al                                                 # 查看當前 vendor 資料夾(確認相依性套件成裝進來了)
   - name: build-image-push-harbor                  # 事件二：可自行定義的名稱
     image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
