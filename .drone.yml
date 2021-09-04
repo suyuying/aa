@@ -31,7 +31,7 @@ steps:                                                                # 以下�
     when:
       branch:
         - master
-~                    
+
   - name: ssh commands                             # 事件三：可自行定義的名
     image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
     settings:
