@@ -7,14 +7,12 @@ steps:                                                                # 以下�
   - name: build-golang                             # 事件一：可自行定義的名稱
     image: fordlinox/plugin                                           # 使用 fordlinox/plugin容器(具有go vendor指令的客製化image）
     commands:                                                         # 需執行的指令（每個在drone裡開的container，預設work space都在/drone/src）
-      - mkdir -p /usr/local/go/src/${DRONE_REPO_NAME}                 # 於 goroot 建立專案名稱的空資料夾,使用-p 是創造一整串資料夾
-      - ls -al vendor                                                 # 查看當前 vendor 資料夾(標示相依性套件的vendor.json,內部寫有版本及commit時間等)
-      - cp -r /drone/src/* /usr/local/go/src/${DRONE_REPO_NAME}       # 將 clone 的專案複製到 goroot 底下
-      - cd /usr/local/go/src/${DRONE_REPO_NAME}                       # 移動至 goroot 專案底下
-      - govendor sync                                                 # 用govendor依據vendor.json把golang程式碼import的library版本,安裝在goroot專案底下
-      - mkdir -p /go/src/Project
+      - mkdir -p /go/src/Project                # 於 goroot 建立專案名稱的空資料夾,使用-p 是創造一整串                                                 
+      - cp -r /drone/src/* /go/src/Project       # 將 clone 的專案複製到 goroot 底下
       - cd /go/src/Project
-      - cp -r /usr/local/go/src/${DRONE_REPO_NAME}/* /go/src/Project
+      - ls        # 移動至 goroot 專案底下
+      - govendor sync                                                 # 用govendor依據vendor.json把golang程式碼import的library版本,安裝在goroot專案底下
+      - ls
       - go build -o project
       - ls 
       - rsync -r /go/src/Project/* /drone/src    # 將裝完相依性套件的資料放回 drone的work space (必須，work space是每個步驟溝通的資料夾
