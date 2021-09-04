@@ -17,7 +17,8 @@ steps:                                                                # 以下�
       - ls 
       - rsync -r /go/src/Project/* /drone/src    # 將裝完相依性套件的資料放回 drone的work space (必須，work space是每個步驟溝通的資料夾
       - cd /drone/src
-      - ls -al                                                 # 查看當前 vendor 資料夾(確認相依性套件成裝進來了)
+      - ls -al         # 查看當前 vendor 資料夾(確認相依性套件成裝進來了)
+        
   - name: build-image-push-harbor                  # 事件二：可自行定義的名稱
     image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
     settings:
@@ -26,7 +27,11 @@ steps:                                                                # 以下�
       password: 
         from_secret: docker_password                                  
       repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
-      tags: latest                                                    # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
+      auto_tag: true                                                  # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
+    when:
+      branch:
+        - master
+~                    
   - name: ssh commands                             # 事件三：可自行定義的名
     image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
     settings:
@@ -41,3 +46,6 @@ steps:                                                                # 以下�
         - docker rm -f build
         - docker rmi -f fordlinox/gobuild_web
         - docker run -d -p 8080:8080 --name=build fordlinox/gobuild_web
+    when:
+      branch:
+        - master
