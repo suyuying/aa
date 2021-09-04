@@ -53,7 +53,7 @@ steps:                                                                # 以下�
         - develop
 
 
-  - name: build-image-push-harbor                  # 事件二：可自行定義的名稱
+  - name: build-image-push-dockerhub                  # 事件二：可自行定義的名稱
     image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
     settings:
       username: 
