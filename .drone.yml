@@ -34,7 +34,7 @@ steps:                                                                # 以下�
       branch:
         - develop 
 
-  - name: ssh commands                             # 事件三：可自行定義的名
+  - name: ssh command test                             # 事件三：可自行定義的名
     image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
     settings:
       host: 192.168.34.8                                               # 目標機器ip
