@@ -27,7 +27,8 @@ steps:                                                                # 以下�
       password: 
         from_secret: docker_password                                  
       repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
-      auto_tag: true                                                  # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
+      tags:
+        - ${DRONE_TAG}              # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
     when:
       event:
         - tag
@@ -45,7 +46,7 @@ steps:                                                                # 以下�
         - echo hello
         - docker rm -f build
         - docker rmi -f fordlinox/gobuild_web
-        - docker run -d -p 8080:8080 --name=build fordlinox/gobuild_web
+        - docker run -d -p 8080:8080 --name=build fordlinox/gobuild_web:${DRONE_TAG}
     when:
       event:
         - tag
