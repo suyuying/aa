@@ -29,8 +29,8 @@ steps:                                                                # 以下�
       repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
       auto_tag: true                                                  # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
     when:
-      branch:
-        - master
+      event:
+        - tag
 
   - name: ssh commands                             # 事件三：可自行定義的名
     image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
@@ -47,5 +47,5 @@ steps:                                                                # 以下�
         - docker rmi -f fordlinox/gobuild_web
         - docker run -d -p 8080:8080 --name=build fordlinox/gobuild_web
     when:
-      branch:
-        - master
+      event:
+        - tag
