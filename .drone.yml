@@ -10,9 +10,9 @@ steps:                                                                # 以下�
       - mkdir -p /go/src/Project                # 於 goroot 建立專案名稱的空資料夾,使用-p 是創造一整串                                                 
       - cp -r /drone/src/* /go/src/Project       # 將 clone 的專案複製到 goroot 底下
       - cd /go/src/Project
-      - ls        # 移動至 goroot 專案底下
+      - ls -al vendor       # 移動至 goroot 專案底下
       - govendor sync                                                 # 用govendor依據vendor.json把golang程式碼import的library版本,安裝在goroot專案底下
-      - ls
+      - ls -al vendor
       - go build -o project
       - ls 
       - rsync -r /go/src/Project/* /drone/src    # 將裝完相依性套件的資料放回 drone的work space (必須，work space是每個步驟溝通的資料夾
