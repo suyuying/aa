@@ -19,6 +19,40 @@ steps:                                                                # 以下�
       - cd /drone/src
       - ls -al         # 查看當前 vendor 資料夾(確認相依性套件成裝進來了)
         
+
+  - name: build_image_push_toregistry                  # 事件二：可自行定義的名稱
+    image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
+    settings:
+      username:
+        from_secret: docker_username                                  # 將registry登錄資料用加密儲存
+      password:
+        from_secret: docker_password
+      repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
+      tags:
+        - test             # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
+    when:
+      branch:
+        - develop 
+
+  - name: ssh command test                             # 事件三：可自行定義的名
+    image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
+    settings:
+      host: 192.168.34.8                                               # 目標機器ip
+      username:                                                        # 將機器登錄資料用加密儲存
+        from_secret: servername
+      password:
+        from_secret: serverpassword
+      port: 22
+      script:                                                          # 控制遠端機台執行指令
+        - echo hello
+        - docker rm -f test
+        - docker rmi -f fordlinox/gobuild_web:test
+        - docker run -d -p 8080:8080 --name=test fordlinox/gobuild_web:test
+    when:
+      branch:
+        - develop
+
+
   - name: build-image-push-harbor                  # 事件二：可自行定義的名稱
     image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
     settings:
@@ -28,10 +62,11 @@ steps:                                                                # 以下�
         from_secret: docker_password                                  
       repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
       tags:
-        - ${DRONE_TAG}              # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
+        - test              # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
     when:
       event:
-        - tag
+        - ${DRONE_TAG}
+        - latest
 
   - name: ssh commands                             # 事件三：可自行定義的名
     image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
@@ -45,8 +80,8 @@ steps:                                                                # 以下�
       script:                                                          # 控制遠端機台執行指令
         - echo hello
         - docker rm -f build
-        - docker rmi -f fordlinox/gobuild_web
-        - docker run -d -p 8080:8080 --name=build fordlinox/gobuild_web:${DRONE_TAG}
+        - docker rmi -f $(docker images | awk '{print $1 ":" $2}' | grep "fordlinox/gobuild_web:[^a-zA-Z]") 
+        - docker run -d -p 80:8080 --name=build fordlinox/gobuild_web:${DRONE_TAG}
     when:
       event:
         - tag
