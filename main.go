@@ -6,7 +6,7 @@ func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message":"This is develop ",
+			"message":"This is develop , good job",
 		})
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080
