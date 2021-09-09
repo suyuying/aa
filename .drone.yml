@@ -1,86 +1,85 @@
 ## Drone 1.0 版本寫法
 kind: pipeline
-type: docker      # 在 Docker 內部執行管道命令
+type: docker                # 在 Docker 內部執行管道命令
 name: build_relase_de       # 可自行定義的名稱
 
-steps:                                                                # 以下用name區隔drone執行的每個步驟
-  - name: build-golang                             # 事件一：可自行定義的名稱
-    image: fordlinox/plugin                                           # 使用 fordlinox/plugin容器(具有go vendor指令的客製化image）
-    commands:                                                         # 需執行的指令（每個在drone裡開的container，預設work space都在/drone/src）
-      - mkdir -p /go/src/Project                # 於 goroot 建立專案名稱的空資料夾,使用-p 是創造一整串                                                 
+steps:                                  # 以下用name區隔drone執行的每個步驟
+  - name: build-golang                  # 事件一:將用go語言寫的程式進行編譯
+    image: fordlinox/plugin             # 使用先前先建好的 fordlinox/plugin映像(具有go vendor指令的客製化image）
+    commands:                           # 需執行的指令（每個在drone裡開的container，預設work space都在/drone/src）
+      - mkdir -p /go/src/Project        # 於 go root 建立專案名稱的空資料夾,使用-p 是創造一整串                                                 
       - cp -r /drone/src/* /go/src/Project       # 將 clone 的專案複製到 goroot 底下
       - cd /go/src/Project
-      - ls -al vendor       # 移動至 goroot 專案底下
-      - govendor sync                                                 # 用govendor依據vendor.json把golang程式碼import的library版本,安裝在goroot專案底下
-      - ls -al vendor
-      - go build -o project
-      - ls 
-      - rsync -r /go/src/Project/* /drone/src    # 將裝完相依性套件的資料放回 drone的work space (必須，work space是每個步驟溝通的資料夾
-      - cd /drone/src
-      - ls -al         # 查看當前 vendor 資料夾(確認相依性套件成裝進來了)
+      - ls -al vendor                   # 移動至 goroot 專案底下
+      - govendor sync                   # 用govendor依據vendor.json把golang程式碼import的library版本,安裝在goroot專案底下
+      - ls -al vendor                   # 觀察安裝後的目錄檔案
+      - go build -o project             # 進行go語言編譯，編譯後的檔案名為project
+      - ls                              # 確認project有編譯完成
+      - rsync -r /go/src/Project/* /drone/src    # 將所有檔案放回 drone的work space (必須，後續Dockerfile會用到資料
+      - cd /drone/src                   # 回work space
+      - ls -al                          # 查看當前 vendor 資料夾(確認所有檔案都進來了)
         
 
-  - name: build_image_push_toregistry                  # 事件二：可自行定義的名稱
-    image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
+  - name: build_image_for_test          # 事件二：將develop分支的程式建立為image，tag為test並放到docker registry
+    image: plugins/docker               # 使用 plugins/docker 容器,docker提供的工具容器(將資料夾底下Dockerfile，進行build 及push到registry)
     settings:
       username:
-        from_secret: docker_username                                  # 將registry登錄資料用加密儲存
+        from_secret: docker_username    # 將registry登錄資料用加密儲存
       password:
         from_secret: docker_password
-      repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
+      repo: fordlinox/gobuild_web      # 每次build會產生image,它的repo名為fordlinox/gobuild_web (帳號名/資料庫名）
       tags:
-        - test             # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
-    when:
-      branch:
+        - test                         # tag為test,用於devlope branch部署的測試環境
+    when:                              # 在develop分支的事件才會執行此step
+      branch:   
         - develop 
 
-  - name: ssh command test                             # 事件三：可自行定義的名
-    image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
+  - name: ssh command test             # 事件三：部署develop分支上的程式到測試環境
+    image: appleboy/drone-ssh          # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署服務
     settings:
-      host: 192.168.34.8                                               # 目標機器ip
-      username:                                                        # 將機器登錄資料用加密儲存
+      host: 192.168.34.8               # 目標機器ip
+      username:                        # 將機器登錄資料用加密儲存
         from_secret: servername
       password:
         from_secret: serverpassword
       port: 22
-      script:                                                          # 控制遠端機台執行指令
-        - echo hello
-        - docker rm -f test
-        - docker rmi -f fordlinox/gobuild_web:test
-        - docker run -d -p 8080:8080 --name=test fordlinox/gobuild_web:test
-    when:
+      script:                         # 控制遠端機台執行指令
+        - docker rm -f test           # 將之前部署名為test的container移除 
+        - docker rmi -f fordlinox/gobuild_web:test  # 把舊的image移除
+        - docker run -d -p 8080:8080 --name=test fordlinox/gobuild_web:test #裝新的imgae，並把container命名為test，使用8080 port
+    when:                             # 在develop分支的事件才會執行此step
       branch:
         - develop
 
 
-  - name: build-image-push-harbor                  # 事件二：可自行定義的名稱
-    image: plugins/docker                          # 使用 plugins/docker 容器,docker提供的工具容器(可將指定資料夾底下Dockerfile，進行build 及push到registry)
+  - name: build_image_for_production   # 事件四：建立給production用的tag
+    image: plugins/docker              # 使用 plugins/docker 容器,(可將指定資料夾底下Dockerfile，進行build 及push到registry)
     settings:
       username: 
-        from_secret: docker_username                                  # 將registry登錄資料用加密儲存
+        from_secret: docker_username   # 將registry登錄資料用加密儲存
       password: 
         from_secret: docker_password                                  
-      repo: fordlinox/gobuild_web                                     # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
-      tags:
+      repo: fordlinox/gobuild_web      # 每次build會產生image,它的如repo名為fordlinox/gobuild_web (帳號名/資料庫名）
+      tags:                            # image的tag會使用git被push的tag名稱,及latest
         - ${DRONE_TAG} 
-        - latest          # 版控的版本號建議用v1.0等有意義數字,不然pull不會更新（因預設都為latest，pull會沒更新）
-    when:
+        - latest          
+    when:                              # 在打tag的事件才會執行此step
       event:
         - tag
 
-  - name: ssh commands                             # 事件三：可自行定義的名
-    image: appleboy/drone-ssh                      # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
+  - name: ssh commands                 # 事件五：可自行定義的名
+    image: appleboy/drone-ssh          # 使用 appleboy/drone-ssh 容器,docker提供的工具容器,可執行ssh並控制遠端機器部署container
     settings:
-      host: 192.168.34.8                                               # 目標機器ip
-      username:                                                        # 將機器登錄資料用加密儲存
+      host: 192.168.34.8               # 目標機器ip
+      username:                        # 將機器登錄資料用加密儲存
         from_secret: servername
       password: 
         from_secret: serverpassword
       port: 22
-      script:                                                          # 控制遠端機台執行指令
-        - docker rm -f build
-        - docker rmi -f $(docker images | awk '{print $1 ":" $2}' | grep "fordlinox/gobuild_web:[^a-zA-Z]") 
-        - docker run -d -p 80:8080 --name=build fordlinox/gobuild_web:${DRONE_TAG}
+      script:                          # 控制遠端機台執行指令
+        - docker rm -f build           # 將之前部署名為build的container移除 
+        - docker rmi -f $(docker images | awk '{print $1 ":" $2}' | grep "fordlinox/gobuild_web:[^a-zA-Z]") #用正規化表達刪除舊版tag 
+        - docker run -d -p 80:8080 --name=build fordlinox/gobuild_web:${DRONE_TAG}   #將container名為build，並用對外開放的80port
     when:
       event:
         - tag
